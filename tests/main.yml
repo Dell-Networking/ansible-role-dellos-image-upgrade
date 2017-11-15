@@ -1,0 +1,8 @@
+---
+# vars file for Dell-Networking.dellos-image-upgrade, below gives a example configuration
+
+dellos_image_upgrade:
+  operation_type: install
+  software_image_url: tftp://10.16.148.8/PKGS_OS10-Enterprise-10.2.9999E.5790-installer-x86_64.bin
+  software_version: 10.2.9999E
+

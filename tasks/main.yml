@@ -1,52 +1,4 @@
 ---
-   - name: "Gathering facts"
-     dellos10_facts:
-       provider: "{{ cli }}"
-     register: facts
-   - block:
-      - name: "process image upgrade operation"
-        dellos10_command:
-          commands:
-            - command: "image upgrade {{ dellos_image_upgrade.software_image_url }}"
-              prompt: "yes/no]:"
-              answer: "yes"
-          provider: "{{ cli }}"
-        register: result
-      - name: "wait for device to complete install process and trigger reload"
-        wait_for:
-          host: "{{ ansible_host }}"
-          port: 22
-          delay: 6
-          sleep: 10
-          timeout: 600
-          state: stopped
-      - name: "Wait for device to come up"
-        wait_for:
-          host: "{{ ansible_host }}"
-          port: 22
-          delay: 6
-          sleep: 10
-          timeout: 600
-          state: started
-      - name: "Wait for 1 min for all the system process to be ready"
-        wait_for:
-          delay: 60
-          timeout: 60
-      - name: "Gathering facts"
-        dellos10_facts:
-          gather_subset: ["all"]
-          provider: "{{ cli }}"
-        register: facts
-      - name: "validate software version"
-        assert:
-          that:
-             - ansible_net_version == dellos_image_upgrade.software_version
-      - name: "Image upgrade status"
-        debug: msg="Image upgrade successful"
-     when: 
-       - dellos_image_upgrade.operation_type == "upgrade"
-       - ansible_net_version != dellos_image_upgrade.software_version
-
    - block:
       - name: "process image {{ dellos_image_upgrade.operation_type }} operation"
         vars:
@@ -56,12 +8,10 @@
             - command: "image {{ command_postfix }}"
               prompt: "yes/no]:"
               answer: "yes"
-          provider: "{{ cli }}"
         register: result
       - name: "Wait for image {{ dellos_image_upgrade.operation_type }} operation"
         dellos10_command:
           commands: "show image status"
-          provider: "{{ cli }}"
         register: result
         until: result.stdout.0.find("In progress") < 1
         retries: 50
@@ -69,7 +19,6 @@
       - name: "Wait for image {{ dellos_image_upgrade.operation_type }} operation"
         dellos10_command:
           commands: "show image status"
-          provider: "{{ cli }}"
         register: image_status
       - name: "validate software version"
         fail: msg="Image {{ dellos_image_upgrade.operation_type }} operation Failed"
@@ -78,4 +27,4 @@
         debug: msg="Image {{ dellos_image_upgrade.operation_type }} successful"
         when: image_status.stdout.0.find("Failed") <= -1
      when:
-       - dellos_image_upgrade.operation_type != "upgrade"
+       - dellos_image_upgrade.operation_type == "install"
